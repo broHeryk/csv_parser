@@ -18,11 +18,14 @@ class CsvWriter(BaseWriter):
             raise ValueError(f'{output_dir_path} is not directory')
         self.dir_path = output_dir_path
 
-    def write(self, transactions: List[Transaction]):
+    def build_file_path(self):
         file_name = int(time.mktime(datetime.now().timetuple()))
-        target_file_path = f'{self.dir_path}/{file_name}.csv'
-        print(f'{self} is writing transactions to file {target_file_path}')
-        with open(target_file_path, 'w+') as f:
+        return f'{self.dir_path}/{file_name}.csv'
+
+    def write(self, transactions: List[Transaction]):
+        file_path = self.build_file_path()
+        print(f'{self} is writing transactions to file {file_path}')
+        with open(file_path, 'w+') as f:
             writer = csv.writer(f)
             writer.writerow(Transaction._fields)
             for transaction in transactions:

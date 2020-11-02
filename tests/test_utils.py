@@ -1,15 +1,15 @@
-from unittest import TestCase
-from unittest import mock
-from utils import *
+from unittest import TestCase, mock
+
 from testfixtures import tempdir
-from writers.writers import CsvWriter
-from config import Transaction
+
+from utils import *
+
 
 class TestUtils(TestCase):
     @tempdir()
     def test_get_csv_files_for_empty_folder(self, temp_dir):
         # Given: Path to empty folder
-        path = temp_dir.path
+        temp_dir.path
         # When: get csv is called for the path
         files = list(get_csv_files(temp_dir.path))
         # Then: no files is returned
@@ -98,4 +98,3 @@ class TestUtils(TestCase):
         write_transactions(transactions=transactions, writers=writers)
         # Than: Exception is handled and second writer is called despite error
         second_writer.write.assert_called_once_with(transactions)
-

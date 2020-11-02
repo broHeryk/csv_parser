@@ -1,8 +1,8 @@
-from unittest import TestCase
-from unittest import mock
-from readers.readers import Bank1Reader, Bank3Reader
-from config import transaction_fields, Transaction
 from decimal import Decimal
+from unittest import TestCase, mock
+
+from config import Transaction, transaction_fields
+from readers.readers import Bank1Reader, Bank3Reader
 
 
 class TestCsvReaders(TestCase):
