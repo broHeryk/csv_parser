@@ -8,9 +8,14 @@ from config import Transaction, transaction_fields
 
 class BaseCsvReader:
     known_columns = tuple()
+    timestamp_format = '%b %d %Y'
+    timestamp_col_name = 'timestamp'
 
     def __init__(self, header):
         self.column_index_map = {col: header.index(col) for col in self.known_columns}
+
+    def timestamp(self, record):
+        return self.make_timestamp(self.get_value_from_record(record, self.timestamp_col_name), self.timestamp_format)
 
     def unify_records(self, csv_reader: '_csv.reader') -> List[Transaction]:
         unified_records = []
@@ -36,6 +41,12 @@ class BaseCsvReader:
             return ''
 
     def get_transaction(self, record: List[str]) -> Transaction:
+        """
+        Transaction is unified output for all csv formats. Csv parser class should have implemented
+        getter functions with the same names as attributes in Transaction class. Particular csv parser has
+        it's own implementation for getter functions if there is some specific logic for it like
+        datetime format or column names or amount calculation.
+        """
         transaction = {field: getattr(self, field)(record) for field in transaction_fields}
         return Transaction(**transaction)
 
@@ -51,12 +62,11 @@ class BaseCsvReader:
 
 class Bank1Reader(BaseCsvReader):
     known_columns = tuple(sorted(['timestamp', 'type', 'amount', 'from', 'to']))
+    timestamp_format = '%b %d %Y'
+    timestamp_col_name = 'timestamp'
 
     def __init__(self, header):
         super().__init__(header)
-
-    def timestamp(self, record):
-        return self.make_timestamp(self.get_value_from_record(record, 'timestamp'), '%b %d %Y')
 
     def amount(self, record):
         return self.get_value_from_record(record, 'amount')
@@ -64,6 +74,8 @@ class Bank1Reader(BaseCsvReader):
 
 class Bank2Reader(BaseCsvReader):
     known_columns = tuple(sorted(['amounts', 'date', 'from', 'to', 'transaction']))
+    timestamp_format = '%d-%m-%Y'
+    timestamp_col_name = 'date'
 
     def __init__(self, header):
         super().__init__(header)
@@ -71,24 +83,20 @@ class Bank2Reader(BaseCsvReader):
     def type(self, record):
         return self.get_value_from_record(record, 'transaction')
 
-    def timestamp(self, record):
-        return self.make_timestamp(self.get_value_from_record(record, 'date'), '%d-%m-%Y')
-
     def amount(self, record):
         return self.get_value_from_record(record, 'amounts')
 
 
 class Bank3Reader(BaseCsvReader):
     known_columns = tuple(sorted(['cents', 'date_readable', 'euro', 'from', 'to', 'type']))
+    timestamp_format = '%d %b %Y'
+    timestamp_col_name = 'date_readable'
 
     def __init__(self, header):
         super().__init__(header)
-
-    def timestamp(self, record):
-        return self.make_timestamp(self.get_value_from_record(record, 'date_readable'), '%d %b %Y')
 
     def amount(self, record):
         euro = Decimal(self.get_value_from_record(record, 'euro'))
         cents = Decimal(self.get_value_from_record(record, 'cents')) / 100
         value = euro + cents
-        return str(value)
+        return value
